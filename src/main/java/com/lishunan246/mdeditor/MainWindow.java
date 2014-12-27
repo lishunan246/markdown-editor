@@ -7,6 +7,7 @@ import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
@@ -37,6 +38,11 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         menuItem.addActionListener(this);
         menu.add(menuItem);
 
+        menuItem=new JMenuItem("Save as");
+        menuItem.setActionCommand("save as");
+        menuItem.addActionListener(this);
+        menu.add(menuItem);
+
         mdArea = new JTextArea();
         mdArea.getDocument().addDocumentListener(this);
 
@@ -59,13 +65,11 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         if ("open".equals(e.getActionCommand()))
         {
             JFileChooser chooser = new JFileChooser();
-            FileFilter filter = new FileNameExtensionFilter(
-                    "Markdown Files(*.md *.txt)", "md", "txt");
+            FileFilter filter = new FileNameExtensionFilter("Markdown Files (*.md)", "md");
             chooser.setFileFilter(filter);
             int returnVal = chooser.showOpenDialog(this);
             if(returnVal == JFileChooser.APPROVE_OPTION) {
-                System.out.println("You chose to open this file: " +
-                        chooser.getSelectedFile().getName());
+                System.out.println("You chose to open this file: " +chooser.getSelectedFile().getName());
 
                 try {
                     String string = Files.toString(chooser.getSelectedFile(), Charset.defaultCharset());
@@ -73,6 +77,30 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
                 } catch (IOException e1) {
                     e1.printStackTrace();
                     System.out.println("Fail to open file");
+                }
+            }
+        }
+        else if ("save as".equals(e.getActionCommand()))
+        {
+            JFileChooser chooser=new JFileChooser();
+            FileFilter filter = new FileNameExtensionFilter("Markdown Files (*.md)", "md");
+            chooser.setFileFilter(filter);
+            if(chooser.showSaveDialog(this)==JFileChooser.APPROVE_OPTION)
+            {
+                String path=chooser.getSelectedFile().getAbsolutePath();
+                System.out.println(path);
+
+                if(!path.endsWith(".md"))
+                {
+                    path+=".md";
+                }
+                try {
+                    FileWriter writer=new FileWriter(path);
+                    writer.write(mdArea.getText());
+                    writer.close();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                    System.out.println("fail to write file");
                 }
             }
         }
