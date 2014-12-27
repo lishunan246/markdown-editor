@@ -8,8 +8,10 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 import org.markdown4j.Markdown4jProcessor;
+import com.google.common.io.Files;
 
 /**
  * Created by lishunan on 14-12-27.
@@ -65,7 +67,13 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
                 System.out.println("You chose to open this file: " +
                         chooser.getSelectedFile().getName());
 
-                //mdArea.
+                try {
+                    String string = Files.toString(chooser.getSelectedFile(), Charset.defaultCharset());
+                    mdArea.setText(string);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                    System.out.println("Fail to open file");
+                }
             }
         }
     }
