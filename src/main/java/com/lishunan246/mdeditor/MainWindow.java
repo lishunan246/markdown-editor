@@ -1,14 +1,20 @@
 package com.lishunan246.mdeditor;
 
+import com.google.common.io.Files;
+import org.markdown4j.Markdown4jProcessor;
+
 import javax.swing.*;
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -16,14 +22,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
-import org.markdown4j.Markdown4jProcessor;
-import com.google.common.io.Files;
-import javax.swing.text.html.StyleSheet;
-
 /**
  * Created by lishunan on 14-12-27.
  */
-public class MainWindow extends JFrame implements ActionListener, DocumentListener {
+public class MainWindow extends JFrame implements ActionListener, DocumentListener, CaretListener {
 
     protected JEditorPane jEditorPane;
     protected JTextArea mdArea;
@@ -33,6 +35,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     {
         mdArea = new JTextArea();
         mdArea.getDocument().addDocumentListener(this);
+        mdArea.addCaretListener(this);
 
         jEditorPane=new JEditorPane();
         jEditorPane.setEditable(false);
@@ -226,5 +229,18 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
 
     @Override
     public void changedUpdate(DocumentEvent e) {
+    }
+
+    @Override
+    public void caretUpdate(CaretEvent e) {
+        try {
+            System.out.println(e.getDot());
+            int line=mdArea.getLineOfOffset(e.getDot());
+            System.out.println(line);
+            //jEditorPane.setCaretPosition(e.getDot());
+        } catch (BadLocationException e1) {
+            System.out.println("bad caret");
+            e1.printStackTrace();
+        }
     }
 }
