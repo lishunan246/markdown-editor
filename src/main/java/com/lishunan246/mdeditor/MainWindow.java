@@ -8,6 +8,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -26,7 +27,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
 
     protected JEditorPane jEditorPane;
     protected JTextArea mdArea;
-    HTMLEditorKit kit;
+    protected HTMLEditorKit kit;
 
     MainWindow()
     {
@@ -46,7 +47,11 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
 
     private void setCSS() {
         File file=new File("default.css");
-        URL css= null;
+        if(!file.exists())
+        {
+            return;
+        }
+        URL css;
         try {
             css = file.toURI().toURL();
             StyleSheet s = new StyleSheet();
@@ -139,6 +144,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
                     System.out.println("cannot reset");
                 }
             }
+            //reopen();
         }
         else if("set css".equals(e.getActionCommand()))
         {
@@ -156,7 +162,14 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
                     System.out.println("error copy css");
                 }
             }
+            //reopen();
         }
+    }
+
+    private void reopen() {
+        setVisible(false);
+        new MainWindow();
+        dispose();
     }
 
     private void openMD() {
