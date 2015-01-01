@@ -8,6 +8,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -44,26 +45,17 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     }
 
     private void setCSS() {
-        JFileChooser chooser = new JFileChooser();
-        FileFilter filter = new FileNameExtensionFilter("CSS Files (*.css)", "css");
-        chooser.setFileFilter(filter);
-        int returnVal = chooser.showOpenDialog(this);
-        if(returnVal == JFileChooser.APPROVE_OPTION) {
-            System.out.println("You chose to open this file: " +chooser.getSelectedFile().getName());
-            try {
-                URL css=chooser.getSelectedFile().toURI().toURL();
-
-                StyleSheet s = new StyleSheet();
-
-                s.importStyleSheet(css);
-
-                kit.setStyleSheet(s);
-
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-                System.out.println("cannot open css");
-            }
+        File file=new File("default.css");
+        URL css= null;
+        try {
+            css = file.toURI().toURL();
+            StyleSheet s = new StyleSheet();
+            s.importStyleSheet(css);
+            kit.setStyleSheet(s);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
         }
+
     }
 
     private void initMainWindow() {
@@ -135,26 +127,35 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         }
         else if("reset css".equals(e.getActionCommand()))
         {
-            System.out.println("reset css");
-
-            StyleSheet s = new StyleSheet();
-
-            try {
-                s.importStyleSheet(new URL("file:///home/lishunan/markdown.css"));
-            } catch (MalformedURLException e1) {
-                e1.printStackTrace();
-                System.out.println("css invalid");
+            File file=new File("default.css");
+            if(file.exists())
+            {
+                if (file.delete())
+                {
+                    System.out.println("reset!");
+                }
+                else
+                {
+                    System.out.println("cannot reset");
+                }
             }
-
-            //kit.getStyleSheet().addStyleSheet(s);
-            jEditorPane=new JEditorPane();
-            jEditorPane.setEditable(false);
-
-            kit = new HTMLEditorKit();
-            kit.setStyleSheet(s);
-            jEditorPane.setEditorKit(kit);
-            revalidate();
-            sync();
+        }
+        else if("set css".equals(e.getActionCommand()))
+        {
+            JFileChooser chooser = new JFileChooser();
+            FileFilter filter = new FileNameExtensionFilter("CSS Files (*.css)", "css");
+            chooser.setFileFilter(filter);
+            int returnVal = chooser.showOpenDialog(this);
+            if(returnVal == JFileChooser.APPROVE_OPTION) {
+                System.out.println("You chose to open this file: " +chooser.getSelectedFile().getName());
+                File file=new File("default.css");
+                try {
+                    Files.copy(chooser.getSelectedFile(),file);
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                    System.out.println("error copy css");
+                }
+            }
         }
     }
 
