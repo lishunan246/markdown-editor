@@ -4,15 +4,16 @@ import com.google.common.io.Files;
 import org.markdown4j.Markdown4jProcessor;
 
 import javax.swing.*;
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
+import javax.swing.event.*;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeSelectionModel;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -25,13 +26,14 @@ import java.nio.charset.Charset;
 /**
  * Created by lishunan on 14-12-27.
  */
-public class MainWindow extends JFrame implements ActionListener, DocumentListener, CaretListener {
+public class MainWindow extends JFrame implements ActionListener, DocumentListener, CaretListener, TreeModelListener {
 
     protected JEditorPane jEditorPane;
     protected JTextArea mdArea;
     protected HTMLEditorKit kit;
     protected boolean dirty=false;
     protected static String title="MarkDown Editor";
+    protected JTree tree;
 
     MainWindow()
     {
@@ -42,6 +44,15 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         jEditorPane=new JEditorPane();
         jEditorPane.setEditable(false);
         kit = new HTMLEditorKit();
+
+        DefaultMutableTreeNode top=new DefaultMutableTreeNode("document");
+        DefaultTreeModel treeModel = new DefaultTreeModel(top);
+        treeModel.addTreeModelListener(this);
+
+        tree = new JTree(treeModel);
+        tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+        tree.setEditable(true);
+        tree.setShowsRootHandles(true);
 
         setCSS();
 
@@ -69,12 +80,16 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     }
 
     private void initMainWindow() {
+        setLayout(new BorderLayout());
+
         JSplitPane splitPane=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setLeftComponent(new JScrollPane(mdArea));
         splitPane.setRightComponent(new JScrollPane(jEditorPane));
         splitPane.setResizeWeight(0.5);
         splitPane.setDividerLocation(0.5);
-        add(splitPane);
+        add(splitPane,BorderLayout.CENTER);
+
+        add(new JScrollPane(tree),BorderLayout.WEST);
 
         setTitle(title);
         setSize(800, 600);
@@ -314,5 +329,25 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
             System.out.println("bad caret");
             e1.printStackTrace();
         }
+    }
+
+    @Override
+    public void treeNodesChanged(TreeModelEvent e) {
+
+    }
+
+    @Override
+    public void treeNodesInserted(TreeModelEvent e) {
+
+    }
+
+    @Override
+    public void treeNodesRemoved(TreeModelEvent e) {
+
+    }
+
+    @Override
+    public void treeStructureChanged(TreeModelEvent e) {
+
     }
 }
