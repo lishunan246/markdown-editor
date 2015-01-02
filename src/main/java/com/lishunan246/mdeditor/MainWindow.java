@@ -147,6 +147,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
                     System.out.println("cannot reset");
                 }
             }
+            JOptionPane.showMessageDialog(this,"CSS will take effect when you run the program next time.");
             //reopen();
         }
         else if("set css".equals(e.getActionCommand()))
@@ -160,6 +161,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
                 File file=new File("default.css");
                 try {
                     Files.copy(chooser.getSelectedFile(),file);
+                    JOptionPane.showMessageDialog(this,"CSS will take effect when you run the program next time.");
                 } catch (IOException e1) {
                     e1.printStackTrace();
                     System.out.println("error copy css");
