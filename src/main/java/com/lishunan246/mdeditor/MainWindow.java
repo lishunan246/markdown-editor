@@ -134,13 +134,32 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     public void actionPerformed(ActionEvent e) {
         if ("open".equals(e.getActionCommand()))
         {
-            openMD();
-            setUndirty();
+            if(dirty) {
+                int i=JOptionPane.showConfirmDialog(this, "Do you want to save your work?");
+                if (JOptionPane.OK_OPTION==i) {
+                    saveAsMD();
+                    setNotDirty();
+                }
+                else if (JOptionPane.NO_OPTION==i)
+                {
+                    openMD();
+                    setNotDirty();
+                }
+                else if(JOptionPane.CANCEL_OPTION==i)
+                {
+                    return;
+                }
+            }
+            else
+            {
+                openMD();
+                setNotDirty();
+            }
         }
         else if ("save as".equals(e.getActionCommand()))
         {
             saveAsMD();
-            setUndirty();
+            setNotDirty();
         }
         else if("reset css".equals(e.getActionCommand()))
         {
@@ -260,7 +279,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     }
 
 
-    private void setUndirty() {
+    private void setNotDirty() {
         dirty=false;
         updateTitle();
     }
