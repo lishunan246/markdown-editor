@@ -1,6 +1,9 @@
 package com.lishunan246.mdeditor;
 
 import com.google.common.io.Files;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.markdown4j.Markdown4jProcessor;
 
 import javax.swing.*;
@@ -10,9 +13,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeSelectionModel;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -23,17 +24,22 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 
+import static org.jsoup.Jsoup.parse;
+
 /**
  * Created by lishunan on 14-12-27.
  */
 public class MainWindow extends JFrame implements ActionListener, DocumentListener, CaretListener, TreeModelListener {
 
+    protected boolean dirty=false;
+    protected static String title="MarkDown Editor";
+
     protected JEditorPane jEditorPane;
     protected JTextArea mdArea;
     protected HTMLEditorKit kit;
-    protected boolean dirty=false;
-    protected static String title="MarkDown Editor";
     protected JTree tree;
+    protected DefaultTreeModel treeModel;
+    protected DefaultMutableTreeNode top;
 
     MainWindow()
     {
@@ -45,8 +51,9 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         jEditorPane.setEditable(false);
         kit = new HTMLEditorKit();
 
-        DefaultMutableTreeNode top=new DefaultMutableTreeNode("document");
-        DefaultTreeModel treeModel = new DefaultTreeModel(top);
+        top = new DefaultMutableTreeNode("document");
+
+        treeModel = new DefaultTreeModel(top);
         treeModel.addTreeModelListener(this);
 
         tree = new JTree(treeModel);
@@ -56,11 +63,12 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
 
         setCSS();
 
-        jEditorPane.setEditorKit(kit);
+        //jEditorPane.setEditorKit(kit);
 
         initMainWindow();
     }
 
+    //try to load the default css
     private void setCSS() {
         File file=new File("default.css");
         if(!file.exists())
@@ -76,7 +84,6 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
-
     }
 
     private void initMainWindow() {
@@ -136,9 +143,30 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         setJMenuBar(menuBar);
     }
 
-    private void sync() {
+    private void sync() {        
         try {
-            jEditorPane.setText("<html>"+new Markdown4jProcessor().process(mdArea.getText())+"<html>");
+            String html="<html>"+new Markdown4jProcessor().process(mdArea.getText())+"<html>";
+            Document doc = parse(html);
+            Elements h1s = doc.getElementsByTag("h1");
+            System.out.println("how many h1");
+            System.out.println(h1s.toArray().length);
+
+            int c=top.getChildCount();
+            System.out.println(top.getChildCount());
+            while (top.getChildCount()!=0)
+            {
+                DefaultMutableTreeNode f = (DefaultMutableTreeNode) top.getChildAt(0);
+                treeModel.removeNodeFromParent(f);
+            }
+            System.out.println(top.getChildCount());
+
+            for(Element e:h1s)
+            {
+                DefaultMutableTreeNode node=new DefaultMutableTreeNode(e.text());
+                treeModel.insertNodeInto(node,top,top.getChildCount());
+                //top.add(node);
+            }
+            jEditorPane.setText(html);
         } catch (IOException e1) {
             e1.printStackTrace();
             System.out.println("parse fail");
@@ -153,12 +181,10 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
                 int i=JOptionPane.showConfirmDialog(this, "Do you want to save your work?");
                 if (JOptionPane.OK_OPTION==i) {
                     saveAsMD();
-                    setNotDirty();
                 }
                 else if (JOptionPane.NO_OPTION==i)
                 {
                     openMD();
-                    setNotDirty();
                 }
                 else if(JOptionPane.CANCEL_OPTION==i)
                 {
@@ -168,13 +194,11 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
             else
             {
                 openMD();
-                setNotDirty();
             }
         }
         else if ("save as".equals(e.getActionCommand()))
         {
             saveAsMD();
-            setNotDirty();
         }
         else if("reset css".equals(e.getActionCommand()))
         {
@@ -234,12 +258,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         }
     }
 
-    private void reopen() {
-        setVisible(false);
-        new MainWindow();
-        dispose();
-    }
-
+    //load a md file
     private void openMD() {
         JFileChooser chooser = new JFileChooser();
         FileFilter filter = new FileNameExtensionFilter("Markdown Files (*.md)", "md");
@@ -251,6 +270,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
             try {
                 String string = Files.toString(chooser.getSelectedFile(), Charset.defaultCharset());
                 mdArea.setText(string);
+                setNotDirty();
             } catch (IOException e1) {
                 e1.printStackTrace();
                 System.out.println("Fail to open file");
@@ -258,6 +278,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         }
     }
 
+    //open a dialog and save
     private void saveAsMD() {
         JFileChooser chooser=new JFileChooser();
         FileFilter filter = new FileNameExtensionFilter("Markdown Files (*.md)", "md");
@@ -275,6 +296,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
                 FileWriter writer=new FileWriter(path);
                 writer.write(mdArea.getText());
                 writer.close();
+                setNotDirty();
             } catch (IOException e1) {
                 e1.printStackTrace();
                 System.out.println("fail to write file");
@@ -321,9 +343,9 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     @Override
     public void caretUpdate(CaretEvent e) {
         try {
-            System.out.println(e.getDot());
+            //System.out.println(e.getDot());
             int line=mdArea.getLineOfOffset(e.getDot());
-            System.out.println(line);
+            //System.out.println(line);
             //jEditorPane.setCaretPosition(e.getDot());
         } catch (BadLocationException e1) {
             System.out.println("bad caret");
