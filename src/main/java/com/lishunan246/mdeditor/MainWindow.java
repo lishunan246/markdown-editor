@@ -30,6 +30,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     protected JEditorPane jEditorPane;
     protected JTextArea mdArea;
     protected HTMLEditorKit kit;
+    protected boolean dirty=false;
 
     MainWindow()
     {
@@ -95,6 +96,11 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
 
         menuItem=new JMenuItem("Save as");
         menuItem.setActionCommand("save as");
+        menuItem.addActionListener(this);
+        menu.add(menuItem);
+
+        menuItem=new JMenuItem("Exit");
+        menuItem.setActionCommand("exit");
         menuItem.addActionListener(this);
         menu.add(menuItem);
 
@@ -169,6 +175,26 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
             }
             //reopen();
         }
+        else if ("exit".equals(e.getActionCommand()))
+        {
+            if(dirty) {
+                int i=JOptionPane.showConfirmDialog(this, "Do you want to save your work before leaving?");
+                if (JOptionPane.OK_OPTION==i) {
+                    saveAsMD();
+                    System.exit(0);
+                }
+                else if (JOptionPane.NO_OPTION==i)
+                {
+                    System.exit(0);
+                }
+                else if(JOptionPane.CANCEL_OPTION==i)
+                {
+                    return;
+                }
+            }
+            else
+                System.exit(0);
+        }
     }
 
     private void reopen() {
@@ -222,11 +248,13 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     @Override
     public void insertUpdate(DocumentEvent e) {
         sync();
+        dirty=true;
     }
 
     @Override
     public void removeUpdate(DocumentEvent e) {
         sync();
+        dirty=true;
     }
 
     @Override
