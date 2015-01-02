@@ -31,6 +31,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     protected JTextArea mdArea;
     protected HTMLEditorKit kit;
     protected boolean dirty=false;
+    protected static String title="MarkDown Editor";
 
     MainWindow()
     {
@@ -75,8 +76,8 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         splitPane.setDividerLocation(0.5);
         add(splitPane);
 
-        setTitle("MarkDown Editor");
-        setSize(800,600);
+        setTitle(title);
+        setSize(800, 600);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
@@ -134,10 +135,12 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         if ("open".equals(e.getActionCommand()))
         {
             openMD();
+            setUndirty();
         }
         else if ("save as".equals(e.getActionCommand()))
         {
             saveAsMD();
+            setUndirty();
         }
         else if("reset css".equals(e.getActionCommand()))
         {
@@ -248,13 +251,33 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     @Override
     public void insertUpdate(DocumentEvent e) {
         sync();
+        setDirty();
+    }
+
+    private void setDirty() {
         dirty=true;
+        updateTitle();
+    }
+
+
+    private void setUndirty() {
+        dirty=false;
+        updateTitle();
+    }
+
+    private void updateTitle() {
+        if(dirty)
+        {
+            setTitle("*-"+title);
+        }
+        else
+            setTitle(title);
     }
 
     @Override
     public void removeUpdate(DocumentEvent e) {
         sync();
-        dirty=true;
+        setDirty();
     }
 
     @Override
