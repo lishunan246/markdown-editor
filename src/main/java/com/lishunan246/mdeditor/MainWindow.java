@@ -92,8 +92,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         JSplitPane splitPane=new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
         splitPane.setLeftComponent(new JScrollPane(mdArea));
         splitPane.setRightComponent(new JScrollPane(jEditorPane));
-        splitPane.setResizeWeight(0.5);
-        splitPane.setDividerLocation(0.5);
+
         add(splitPane,BorderLayout.CENTER);
 
         add(new JScrollPane(tree),BorderLayout.WEST);
@@ -105,6 +104,10 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
 
         initMenuBar();
         setVisible(true);
+
+        //set after setVisible()
+        splitPane.setResizeWeight(0.5);
+        splitPane.setDividerLocation(0.5);
     }
 
     private void initMenuBar() {
