@@ -1,6 +1,16 @@
 package com.lishunan246.mdeditor;
 
 import com.google.common.io.Files;
+import org.apache.commons.io.FileUtils;
+import org.docx4j.XmlUtils;
+import org.docx4j.convert.in.xhtml.XHTMLImporter;
+import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
+import org.docx4j.jaxb.Context;
+import org.docx4j.openpackaging.exceptions.Docx4JException;
+import org.docx4j.openpackaging.exceptions.InvalidFormatException;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.openpackaging.parts.WordprocessingML.NumberingDefinitionsPart;
+import org.docx4j.wml.RFonts;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -14,6 +24,7 @@ import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.tree.*;
+import javax.xml.bind.JAXBException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -34,6 +45,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
     protected boolean dirty=false;
     protected static String title="MarkDown Editor";
 
+    String html;
     protected JEditorPane jEditorPane;
     protected JTextArea mdArea;
     protected HTMLEditorKit kit;
@@ -125,6 +137,11 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         menuItem.addActionListener(this);
         menu.add(menuItem);
 
+        menuItem=new JMenuItem("To docx");
+        menuItem.setActionCommand("to docx");
+        menuItem.addActionListener(this);
+        menu.add(menuItem);
+
         menuItem=new JMenuItem("Exit");
         menuItem.setActionCommand("exit");
         menuItem.addActionListener(this);
@@ -148,7 +165,7 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
 
     private void sync() {        
         try {
-            String html="<html>"+new Markdown4jProcessor().process(mdArea.getText())+"<html>";
+            html = "<html>"+new Markdown4jProcessor().process(mdArea.getText())+"<html>";
             Document doc = parse(html);
             Elements h1s = doc.getElementsByTag("h1");
             System.out.println("how many h1");
@@ -259,6 +276,56 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
             else
                 System.exit(0);
         }
+        else if("to docx".equals(e.getActionCommand()))
+        {
+            try {
+//        String baseURL = "file:///C:/Users/jharrop/git/docx4j-ImportXHTML/somedir/";
+                String baseURL = "file:///C:/Users/jharrop/git/docx4j-ImportXHTML/";
+
+                String unescaped = html;
+//        if (stringFromFile.contains("&lt;/") ) {
+//    		unescaped = StringEscapeUtils.unescapeHtml(stringFromFile);
+//        }
+
+
+//        XHTMLImporter.setTableFormatting(FormattingOption.IGNORE_CLASS);
+//        XHTMLImporter.setParagraphFormatting(FormattingOption.IGNORE_CLASS);
+
+                System.out.println("Unescaped: " + unescaped);
+
+                // Setup font mapping
+                RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
+                rfonts.setAscii("Century Gothic");
+                XHTMLImporterImpl.addFontMapping("Century Gothic", rfonts);
+
+                // Create an empty docx package
+                WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.createPackage();
+                //WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(new File(System.getProperty("user.dir") + "/styled.docx"));
+
+
+                NumberingDefinitionsPart ndp = new NumberingDefinitionsPart();
+                wordMLPackage.getMainDocumentPart().addTargetPart(ndp);
+                ndp.unmarshalDefaultNumbering();
+
+                // Convert the XHTML, and add it into the empty docx we made
+                XHTMLImporterImpl importer = new XHTMLImporterImpl(wordMLPackage);
+                importer.setHyperlinkStyle("Hyperlink");
+                wordMLPackage.getMainDocumentPart().getContent().addAll(importer.convert(unescaped, baseURL));
+
+                System.out.println(XmlUtils.marshaltoString(wordMLPackage.getMainDocumentPart().getJaxbElement(), true, true));
+
+//		System.out.println(
+//				XmlUtils.marshaltoString(wordMLPackage.getMainDocumentPart().getNumberingDefinitionsPart().getJaxbElement(), true, true));
+
+                wordMLPackage.save(new java.io.File("OUT_from_XHTML.docx") );
+            } catch (InvalidFormatException e1) {
+                e1.printStackTrace();
+            } catch (Docx4JException e1) {
+                e1.printStackTrace();
+            } catch (JAXBException e1) {
+                e1.printStackTrace();
+            }
+        }
     }
 
     //load a md file
@@ -317,7 +384,6 @@ public class MainWindow extends JFrame implements ActionListener, DocumentListen
         dirty=true;
         updateTitle();
     }
-
 
     private void setNotDirty() {
         dirty=false;
